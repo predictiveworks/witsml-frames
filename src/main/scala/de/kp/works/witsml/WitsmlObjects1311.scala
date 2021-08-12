@@ -18,6 +18,7 @@ package de.kp.works.witsml
  *
  */
 
+import com.hashmapinc.tempus.WitsmlObjects.v1411.{ObjWellbores, ObjWells}
 import com.hashmapinc.tempus.witsml.api.WitsmlVersion
 import com.hashmapinc.tempus.witsml.client.WitsmlQuery
 import de.kp.works.witsml.Objects1311._
@@ -111,6 +112,44 @@ class WitsmlObjects1311(
 
         null
     }
+  }
+
+  def getWells(witsmlQuery:WitsmlQuery):ObjWells = {
+
+    try {
+      /*
+       * Note: Even if the server operates with version 1.3.11,
+       * the server internally converts the result into version
+       * v1411
+       */
+      val wells:com.hashmapinc.tempus.WitsmlObjects.v1411.ObjWells =
+        client.getWellsAsObj(witsmlQuery)
+
+      wells
+
+    } catch {
+      case t:Throwable => null
+    }
+
+  }
+
+  def getWellbores(witsmlQuery:WitsmlQuery):ObjWellbores = {
+
+    try {
+      /*
+       * Note: Even if the server operates with version 1.3.11,
+       * the server internally converts the result into version
+       * v1411
+       */
+       val wellbores:com.hashmapinc.tempus.WitsmlObjects.v1411.ObjWellbores =
+         client.getWellboresForWellAsObj(witsmlQuery)
+
+      wellbores
+
+    } catch {
+      case t:Throwable => null
+    }
+
   }
 
 }

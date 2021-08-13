@@ -31,4 +31,9 @@ object WitsmlTransformer {
     session.read.json(dataset)
   }
 
+  def transform(data:Seq[String]):DataFrame = {
+    val dataset = data.toDS()
+    session.read.json(dataset)
+
+  }
 }

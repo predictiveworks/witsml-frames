@@ -18,12 +18,13 @@ package de.kp.works.witsml
  *
  */
 
-import com.hashmapinc.tempus.WitsmlObjects.Util.WitsmlVersionTransformer
 import com.hashmapinc.tempus.WitsmlObjects.v1411._
 import com.hashmapinc.tempus.witsml.api.WitsmlVersion
 import com.hashmapinc.tempus.witsml.client.WitsmlQuery
 import de.kp.works.witsml.Objects1311._
 import org.apache.spark.sql.DataFrame
+
+import scala.collection.JavaConversions._
 
 class WitsmlObjects1311(
   /* Specifies the witsml.tcp address of the witsml server */
@@ -32,38 +33,31 @@ class WitsmlObjects1311(
   username:String,
   /* Specify the password for Witsml Server */
   password:String) extends WitsmlObjects(endpoint, username, password, WitsmlVersion.VERSION_1311) {
-  /*
-   * This transformer is usually part of the Witsml Client.
-   * It is externalized here to enable message processing
-   * that is compliant with Jackson v2.6.x
-   */
-  private val transform:WitsmlVersionTransformer =
+
+  def getObject(witsmlQuery: WitsmlQuery, objectType:Objects1311.Value, unpack:Boolean=true):DataFrame = {
     try {
-      new WitsmlVersionTransformer()
-    } catch {
-      case t: Throwable => null
-    }
-
-  def getObject(witsmlQuery: WitsmlQuery, objectType:Objects1311.Value):DataFrame = {
-    try {
-
-      val data = client.getObjectData(witsmlQuery)
-      /*
-       * Extract the XML representation and convert into v1411
-       * compliant XML format
-       */
-      val xml = data.getXmlOut
-
-      val xml1411 = convertVersion(xml)
-      if (xml1411 == null) return null
-
-      val deserialized = objectType match {
+      objectType match {
         case BHARUN =>
-          witsmlMarshaller.deserialize(xml1411, classOf[ObjBhaRuns])
+          val deserialized = extract1311(witsmlQuery, classOf[ObjBhaRuns])
+          if (unpack) {
+            val json = deserialized.getBhaRun.map(mapper.writeValueAsString)
+            WitsmlTransformer.transform(json)
+          }
+          else nested(deserialized)
         case CEMENTJOB =>
-          witsmlMarshaller.deserialize(xml1411, classOf[ObjCementJobs])
+          val deserialized = extract1311(witsmlQuery, classOf[ObjCementJobs])
+          if (unpack) {
+            val json = deserialized.getCementJob.map(mapper.writeValueAsString)
+            WitsmlTransformer.transform(json)
+          }
+          else nested(deserialized)
         case CONVCORE =>
-          witsmlMarshaller.deserialize(xml1411, classOf[ObjConvCores])
+          val deserialized = extract1311(witsmlQuery, classOf[ObjConvCores])
+          if (unpack) {
+            val json = deserialized.getConvCore.map(mapper.writeValueAsString)
+            WitsmlTransformer.transform(json)
+          }
+          else nested(deserialized)
         case DTSINSTALLEDSYSTEM =>
           /*
            * Restricted to v1311
@@ -75,38 +69,108 @@ class WitsmlObjects1311(
           */
         getDtsMeasurements(witsmlQuery)
         case FLUIDREPORT =>
-          witsmlMarshaller.deserialize(xml1411, classOf[ObjFluidsReports])
+          val deserialized = extract1311(witsmlQuery, classOf[ObjFluidsReports])
+          if (unpack) {
+            val json = deserialized.getFluidsReport.map(mapper.writeValueAsString)
+            WitsmlTransformer.transform(json)
+          }
+          else nested(deserialized)
         case FORMATIONMARKER =>
-          witsmlMarshaller.deserialize(xml1411, classOf[ObjFormationMarkers])
+          val deserialized = extract1311(witsmlQuery, classOf[ObjFormationMarkers])
+          if (unpack) {
+            val json = deserialized.getFormationMarker.map(mapper.writeValueAsString)
+            WitsmlTransformer.transform(json)
+          }
+          else nested(deserialized)
         case LOG =>
-          witsmlMarshaller.deserialize(xml1411, classOf[ObjLogs])
+          val deserialized = extract1311(witsmlQuery, classOf[ObjLogs])
+          if (unpack) {
+            val json = deserialized.getLog.map(mapper.writeValueAsString)
+            WitsmlTransformer.transform(json)
+          }
+          else nested(deserialized)
         case MESSAGE =>
-          witsmlMarshaller.deserialize(xml1411, classOf[ObjMessages])
+          val deserialized = extract1311(witsmlQuery, classOf[ObjMessages])
+          if (unpack) {
+            val json = deserialized.getMessage.map(mapper.writeValueAsString)
+            WitsmlTransformer.transform(json)
+          }
+          else nested(deserialized)
         case MUDLOG =>
-          witsmlMarshaller.deserialize(xml1411, classOf[ObjMudLogs])
+          val deserialized = extract1311(witsmlQuery, classOf[ObjMudLogs])
+          if (unpack) {
+            val json = deserialized.getMudLog.map(mapper.writeValueAsString)
+            WitsmlTransformer.transform(json)
+          }
+          else nested(deserialized)
         case OPSREPORT =>
-          witsmlMarshaller.deserialize(xml1411, classOf[ObjOpsReports])
+          val deserialized = extract1311(witsmlQuery, classOf[ObjOpsReports])
+          if (unpack) {
+            val json = deserialized.getOpsReport.map(mapper.writeValueAsString)
+            WitsmlTransformer.transform(json)
+          }
+          else nested(deserialized)
         case REALTIME =>
           /*
            * Restricted to v1311
            */
           getRealtimes(witsmlQuery)
         case RIG =>
-          witsmlMarshaller.deserialize(xml1411, classOf[ObjRigs])
+          val deserialized = extract1311(witsmlQuery, classOf[ObjRigs])
+          if (unpack) {
+            val json = deserialized.getRig.map(mapper.writeValueAsString)
+            WitsmlTransformer.transform(json)
+          }
+          else nested(deserialized)
         case RISK =>
-          witsmlMarshaller.deserialize(xml1411, classOf[ObjRisks])
+          val deserialized = extract1311(witsmlQuery, classOf[ObjRisks])
+          if (unpack) {
+            val json = deserialized.getRisk.map(mapper.writeValueAsString)
+            WitsmlTransformer.transform(json)
+          }
+          else nested(deserialized)
         case SIDEWALLCORE =>
-          witsmlMarshaller.deserialize(xml1411, classOf[ObjSidewallCores])
+          val deserialized = extract1311(witsmlQuery, classOf[ObjSidewallCores])
+          if (unpack) {
+            val json = deserialized.getSidewallCore.map(mapper.writeValueAsString)
+            WitsmlTransformer.transform(json)
+          }
+          else nested(deserialized)
         case SURVEYPROGRAM =>
-          witsmlMarshaller.deserialize(xml1411, classOf[ObjSurveyPrograms])
+          val deserialized = extract1311(witsmlQuery, classOf[ObjSurveyPrograms])
+          if (unpack) {
+            val json = deserialized.getSurveyProgram.map(mapper.writeValueAsString)
+            WitsmlTransformer.transform(json)
+          }
+          else nested(deserialized)
         case TARGET =>
-          witsmlMarshaller.deserialize(xml1411, classOf[ObjTargets])
+          val deserialized = extract1311(witsmlQuery, classOf[ObjTargets])
+          if (unpack) {
+            val json = deserialized.getTarget.map(mapper.writeValueAsString)
+            WitsmlTransformer.transform(json)
+          }
+          else nested(deserialized)
         case TRAJECTORY =>
-          witsmlMarshaller.deserialize(xml1411, classOf[ObjTrajectorys])
+          val deserialized = extract1311(witsmlQuery, classOf[ObjTrajectorys])
+          if (unpack) {
+            val json = deserialized.getTrajectory.map(mapper.writeValueAsString)
+            WitsmlTransformer.transform(json)
+          }
+          else nested(deserialized)
         case TUBULAR =>
-          witsmlMarshaller.deserialize(xml1411, classOf[ObjTubulars])
+          val deserialized = extract1311(witsmlQuery, classOf[ObjTubulars])
+          if (unpack) {
+            val json = deserialized.getTubular.map(mapper.writeValueAsString)
+            WitsmlTransformer.transform(json)
+          }
+          else nested(deserialized)
         case WBGEOMETRY =>
-          witsmlMarshaller.deserialize(xml1411, classOf[ObjWbGeometrys])
+          val deserialized = extract1311(witsmlQuery, classOf[ObjWbGeometrys])
+          if (unpack) {
+            val json = deserialized.getWbGeometry.map(mapper.writeValueAsString)
+            WitsmlTransformer.transform(json)
+          }
+          else nested(deserialized)
         case WELLLOG =>
           /*
            * Restricted to v1311
@@ -115,11 +179,6 @@ class WitsmlObjects1311(
         case _ =>
           throw new Exception(s"Provided object type `${objectType.toString}` is not supported.")
       }
-
-      val json = mapper.writeValueAsString(deserialized)
-      if (json == null) return null
-
-      WitsmlTransformer.transform(json)
 
     } catch {
       case t:Throwable =>
@@ -131,7 +190,7 @@ class WitsmlObjects1311(
 
   }
 
-  def getDtsInstalledSystems(witsmlQuery:WitsmlQuery):DataFrame = {
+  def getDtsInstalledSystems(witsmlQuery:WitsmlQuery,unpack:Boolean=true):DataFrame = {
 
     try {
       val data = client.getObjectData(witsmlQuery)
@@ -139,9 +198,12 @@ class WitsmlObjects1311(
 
       val deserialized = witsmlMarshaller
         .deserialize(xml, classOf[com.hashmapinc.tempus.WitsmlObjects.v1311.ObjDtsInstalledSystems])
-      val json = mapper.writeValueAsString(deserialized)
 
-      WitsmlTransformer.transform(json)
+      if (unpack) {
+        val json = deserialized.getDtsInstalledSystem.map(mapper.writeValueAsString)
+        WitsmlTransformer.transform(json)
+
+      } else nested(deserialized)
 
     } catch {
       case t:Throwable => null
@@ -149,7 +211,7 @@ class WitsmlObjects1311(
 
   }
 
-  def getDtsMeasurements(witsmlQuery:WitsmlQuery):DataFrame = {
+  def getDtsMeasurements(witsmlQuery:WitsmlQuery,unpack:Boolean=true):DataFrame = {
 
     try {
       val data = client.getObjectData(witsmlQuery)
@@ -157,9 +219,12 @@ class WitsmlObjects1311(
 
       val deserialized = witsmlMarshaller
         .deserialize(xml, classOf[com.hashmapinc.tempus.WitsmlObjects.v1311.ObjDtsMeasurements])
-      val json = mapper.writeValueAsString(deserialized)
 
-      WitsmlTransformer.transform(json)
+      if (unpack) {
+        val json = deserialized.getDtsMeasurement.map(mapper.writeValueAsString)
+        WitsmlTransformer.transform(json)
+
+      } else nested(deserialized)
 
     } catch {
       case t:Throwable => null
@@ -167,7 +232,7 @@ class WitsmlObjects1311(
 
   }
 
-  def getRealtimes(witsmlQuery:WitsmlQuery):DataFrame = {
+  def getRealtimes(witsmlQuery:WitsmlQuery,unpack:Boolean=true):DataFrame = {
 
     try {
       val data = client.getObjectData(witsmlQuery)
@@ -175,9 +240,12 @@ class WitsmlObjects1311(
 
       val deserialized = witsmlMarshaller.deserialize(xml,
         classOf[com.hashmapinc.tempus.WitsmlObjects.v1311.ObjRealtimes])
-      val json = mapper.writeValueAsString(deserialized)
 
-      WitsmlTransformer.transform(json)
+      if (unpack) {
+        val json = deserialized.getRealtime.map(mapper.writeValueAsString)
+        WitsmlTransformer.transform(json)
+
+      } else nested(deserialized)
 
     } catch {
       case t:Throwable => null
@@ -185,7 +253,7 @@ class WitsmlObjects1311(
 
   }
 
-  def getWells(witsmlQuery:WitsmlQuery):DataFrame = {
+  def getWells(witsmlQuery:WitsmlQuery,unpack:Boolean=true):DataFrame = {
 
     try {
       val data = client.getObjectData(witsmlQuery)
@@ -193,9 +261,12 @@ class WitsmlObjects1311(
 
       val deserialized = witsmlMarshaller
         .deserialize(xml, classOf[com.hashmapinc.tempus.WitsmlObjects.v1311.ObjWells])
-      val json = mapper.writeValueAsString(deserialized)
 
-      WitsmlTransformer.transform(json)
+      if (unpack) {
+        val json = deserialized.getWell.map(mapper.writeValueAsString)
+        WitsmlTransformer.transform(json)
+
+      } else nested(deserialized)
 
     } catch {
       case t:Throwable => null
@@ -203,7 +274,7 @@ class WitsmlObjects1311(
 
   }
 
-  def getWellLogs(witsmlQuery:WitsmlQuery):DataFrame = {
+  def getWellLogs(witsmlQuery:WitsmlQuery,unpack:Boolean=true):DataFrame = {
 
     try {
       val data = client.getObjectData(witsmlQuery)
@@ -211,56 +282,29 @@ class WitsmlObjects1311(
 
       val deserialized = witsmlMarshaller
         .deserialize(xml, classOf[com.hashmapinc.tempus.WitsmlObjects.v1311.ObjWellLogs])
-      val json = mapper.writeValueAsString(deserialized)
 
-      WitsmlTransformer.transform(json)
+      if (unpack) {
+        val json = deserialized.getWellLog.map(mapper.writeValueAsString)
+        WitsmlTransformer.transform(json)
 
-    } catch {
-      case t:Throwable => null
-    }
-
-  }
-
-  def getWellbores(witsmlQuery:WitsmlQuery):DataFrame = {
-
-    try {
-      /*
-       * The client interface method `getWellboresForWellAsObj`
-       * cannot be used as the WitsmlMarshaller depends on the
-       * Jackson version 2.9.9 which is not compliant with Spark
-       */
-      val data = client.getObjectData(witsmlQuery)
-      /*
-       * Extract the XML representation and convert into v1411
-       * compliant XML format
-       */
-      val xml = data.getXmlOut
-
-      val xml1411 = convertVersion(xml)
-      if (xml1411 == null) return null
-      /*
-       * Transform XML representation into POJO representation
-       */
-      val deserialized = witsmlMarshaller.deserialize(xml1411, classOf[ObjWellbores])
-      val json = mapper.writeValueAsString(deserialized)
-
-      WitsmlTransformer.transform(json)
+      } else nested(deserialized)
 
     } catch {
       case t:Throwable => null
     }
 
   }
-  /**
-   * This method is a copy of the respective method
-   * with the Witsml Client; it is required for v1311
-   * response only
-   */
-  private def convertVersion(original: String):String = {
+
+  def getWellbores(witsmlQuery:WitsmlQuery,unpack:Boolean=true):DataFrame = {
 
     try {
-      val converted = transform.convertVersion(original)
-      if (converted.isEmpty) null else converted
+
+      val deserialized = extract1311(witsmlQuery, classOf[ObjWellbores])
+      if (unpack) {
+        val json = deserialized.getWellbore.map(mapper.writeValueAsString)
+        WitsmlTransformer.transform(json)
+
+      } else nested(deserialized)
 
     } catch {
       case t:Throwable => null

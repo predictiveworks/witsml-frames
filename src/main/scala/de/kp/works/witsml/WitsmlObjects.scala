@@ -20,8 +20,10 @@ package de.kp.works.witsml
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
+import com.hashmapinc.tempus.WitsmlObjects.Util.WitsmlVersionTransformer
 import com.hashmapinc.tempus.witsml.api.WitsmlVersion
-import com.hashmapinc.tempus.witsml.client.Client
+import com.hashmapinc.tempus.witsml.client.{Client, WitsmlQuery}
+import org.apache.spark.sql.DataFrame
 import org.slf4j.{Logger, LoggerFactory}
 
 abstract class WitsmlObjects(
@@ -47,5 +49,57 @@ abstract class WitsmlObjects(
   client.setVersion(version)
 
   client.connect()
+  /**
+   * This transformer is usually part of the Witsml Client.
+   * It is externalized here to enable message processing
+   * that is compliant with Jackson v2.6.x
+   */
+  protected val transform:WitsmlVersionTransformer =
+    try {
+      new WitsmlVersionTransformer()
+    } catch {
+      case t: Throwable => null
+    }
+
+  /**
+   * This method is a copy of the respective method
+   * with the Witsml Client; it is required for v1311
+   * response only
+   */
+  protected def convertVersion(original: String):String = {
+
+    try {
+      val converted = transform.convertVersion(original)
+      if (converted.isEmpty) null else converted
+
+    } catch {
+      case t:Throwable => null
+    }
+
+  }
+
+  protected def extract1311[T](witsmlQuery:WitsmlQuery, witsmlClass:Class[T]):T = {
+
+    val data = client.getObjectData(witsmlQuery)
+    val xml = data.getXmlOut
+
+    val xml1411 = convertVersion(xml)
+    witsmlMarshaller.deserialize(xml1411, classOf[T])
+
+  }
+
+  protected def extract1411[T](witsmlQuery:WitsmlQuery, witsmlClass:Class[T]):T = {
+
+    val data = client.getObjectData(witsmlQuery)
+    val xml = data.getXmlOut
+
+    witsmlMarshaller.deserialize(xml, classOf[T])
+
+  }
+
+  protected def nested(deserialized:AnyRef):DataFrame = {
+    val json = mapper.writeValueAsString(deserialized)
+    WitsmlTransformer.transform(json)
+  }
 
 }

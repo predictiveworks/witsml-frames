@@ -18,6 +18,8 @@ package de.kp.works.witsml
  *
  */
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.hashmapinc.tempus.witsml.api.WitsmlVersion
 import com.hashmapinc.tempus.witsml.client.Client
 import org.slf4j.{Logger, LoggerFactory}
@@ -30,6 +32,11 @@ abstract class WitsmlObjects(
   /* Specify the password for Witsml Server */
   password:String,
   version:WitsmlVersion) {
+
+  protected val mapper = new ObjectMapper()
+  mapper.registerModule(DefaultScalaModule)
+
+  protected val witsmlMarshaller = new WitsmlMarshaller()
 
   protected val logger: Logger = LoggerFactory.getLogger(classOf[WitsmlObjects])
 

@@ -18,36 +18,12 @@ package de.kp.works.witsml
  *
  */
 
-import com.hashmapinc.tempus.WitsmlObjects.v1411.{ObjWellbores, ObjWells}
+import com.hashmapinc.tempus.WitsmlObjects.Util.WitsmlVersionTransformer
+import com.hashmapinc.tempus.WitsmlObjects.v1411._
 import com.hashmapinc.tempus.witsml.api.WitsmlVersion
 import com.hashmapinc.tempus.witsml.client.WitsmlQuery
 import de.kp.works.witsml.Objects1311._
-
-object Objects1311 extends Enumeration {
-
-  val BHARUN: Objects1311.Value             = Value("BHARUN")
-  val CEMENTJOB: Objects1311.Value          = Value("CEMENTJOB")
-  val CONVCORE: Objects1311.Value           = Value("CONVCORE")
-  val DTSINSTALLEDSYSTEM: Objects1311.Value = Value("DTSINSTALLEDSYSTEM")
-  val DTSMEASUREMENT: Objects1311.Value     = Value("DTSMEASUREMENT")
-  val FLUIDREPORT: Objects1311.Value        = Value("FLUIDREPORT")
-  val FORMATIONMARKER: Objects1311.Value    = Value("FORMATIONMARKER")
-  val LOG: Objects1311.Value                = Value("LOG")
-  val MESSAGE: Objects1311.Value            = Value("MESSAGE")
-  val MUDLOG: Objects1311.Value             = Value("MUDLOG")
-  val OPSREPORT: Objects1311.Value          = Value("OPSREPORT")
-  val REALTIME: Objects1311.Value           = Value("REALTIME")
-  val RIG: Objects1311.Value                = Value("RIG")
-  val RISK: Objects1311.Value               = Value("RISK")
-  val SIDEWALLCORE: Objects1311.Value       = Value("SIDEWALLCORE")
-  val SURVEYPROGRAM: Objects1311.Value      = Value("SURVEYPROGRAM")
-  val TARGET: Objects1311.Value             = Value("TARGET")
-  val TRAJECTORY: Objects1311.Value         = Value("TRAJECTORY")
-  val TUBULAR: Objects1311.Value            = Value("TUBULAR")
-  val WBGEOMETRY: Objects1311.Value         = Value("WBGEOMETRY")
-  val WELLLOG: Objects1311.Value            = Value("WELLLOG")
-
-}
+import org.apache.spark.sql.DataFrame
 
 class WitsmlObjects1311(
   /* Specifies the witsml.tcp address of the witsml server */
@@ -56,55 +32,95 @@ class WitsmlObjects1311(
   username:String,
   /* Specify the password for Witsml Server */
   password:String) extends WitsmlObjects(endpoint, username, password, WitsmlVersion.VERSION_1311) {
-
-  def getObject(witsmlQuery: WitsmlQuery, objectType:Objects1311.Value):Any = {
+  /*
+   * This transformer is usually part of the Witsml Client.
+   * It is externalized here to enable message processing
+   * that is compliant with Jackson v2.6.x
+   */
+  private val transform:WitsmlVersionTransformer =
     try {
-      objectType match {
+      new WitsmlVersionTransformer()
+    } catch {
+      case t: Throwable => null
+    }
+
+  def getObject(witsmlQuery: WitsmlQuery, objectType:Objects1311.Value):DataFrame = {
+    try {
+
+      val data = client.getObjectData(witsmlQuery)
+      /*
+       * Extract the XML representation and convert into v1411
+       * compliant XML format
+       */
+      val xml = data.getXmlOut
+
+      val xml1411 = convertVersion(xml)
+      if (xml1411 == null) return null
+
+      val deserialized = objectType match {
         case BHARUN =>
-          client.getBhaRunsAsObj(witsmlQuery)
+          witsmlMarshaller.deserialize(xml1411, classOf[ObjBhaRuns])
         case CEMENTJOB =>
-          client.getCementJobsAsObj(witsmlQuery)
+          witsmlMarshaller.deserialize(xml1411, classOf[ObjCementJobs])
         case CONVCORE =>
-          client.getConvCoresAsObj(witsmlQuery)
+          witsmlMarshaller.deserialize(xml1411, classOf[ObjConvCores])
         case DTSINSTALLEDSYSTEM =>
-          client.getDtsInstalledSystemsAsObj(witsmlQuery)
+          /*
+           * Restricted to v1311
+           */
+          getDtsInstalledSystems(witsmlQuery)
         case DTSMEASUREMENT =>
-          client.getDtsMeasurementsAsObj(witsmlQuery)
+         /*
+          * Restricted to v1311
+          */
+        getDtsMeasurements(witsmlQuery)
         case FLUIDREPORT =>
-          client.getFluidsReportsAsObj(witsmlQuery)
+          witsmlMarshaller.deserialize(xml1411, classOf[ObjFluidsReports])
         case FORMATIONMARKER =>
-          client.getFormationMarkersAsObj(witsmlQuery)
+          witsmlMarshaller.deserialize(xml1411, classOf[ObjFormationMarkers])
         case LOG =>
-          client.getLogsAsObj(witsmlQuery)
+          witsmlMarshaller.deserialize(xml1411, classOf[ObjLogs])
         case MESSAGE =>
-          client.getMessagesAsObj(witsmlQuery)
+          witsmlMarshaller.deserialize(xml1411, classOf[ObjMessages])
         case MUDLOG =>
-          client.getMudLogsAsObj(witsmlQuery)
+          witsmlMarshaller.deserialize(xml1411, classOf[ObjMudLogs])
         case OPSREPORT =>
-          client.getOpsReportsAsObj(witsmlQuery)
+          witsmlMarshaller.deserialize(xml1411, classOf[ObjOpsReports])
         case REALTIME =>
-          client.getRealtimesAsObj(witsmlQuery)
+          /*
+           * Restricted to v1311
+           */
+          getRealtimes(witsmlQuery)
         case RIG =>
-          client.getRigsAsObj(witsmlQuery)
+          witsmlMarshaller.deserialize(xml1411, classOf[ObjRigs])
         case RISK =>
-          client.getRisksAsObj(witsmlQuery)
+          witsmlMarshaller.deserialize(xml1411, classOf[ObjRisks])
         case SIDEWALLCORE =>
-          client.getSideWallCoresAsObj(witsmlQuery)
+          witsmlMarshaller.deserialize(xml1411, classOf[ObjSidewallCores])
         case SURVEYPROGRAM =>
-          client.getSurveyProgramsAsObj(witsmlQuery)
+          witsmlMarshaller.deserialize(xml1411, classOf[ObjSurveyPrograms])
         case TARGET =>
-          client.getTargetsAsObj(witsmlQuery)
+          witsmlMarshaller.deserialize(xml1411, classOf[ObjTargets])
         case TRAJECTORY =>
-          client.getTrajectorysAsObj(witsmlQuery)
+          witsmlMarshaller.deserialize(xml1411, classOf[ObjTrajectorys])
         case TUBULAR =>
-          client.getTubularsAsObj(witsmlQuery)
+          witsmlMarshaller.deserialize(xml1411, classOf[ObjTubulars])
         case WBGEOMETRY =>
-          client.getWbGeometrysAsObj(witsmlQuery)
+          witsmlMarshaller.deserialize(xml1411, classOf[ObjWbGeometrys])
         case WELLLOG =>
-          client.getWellLogsAsObj(witsmlQuery)
+          /*
+           * Restricted to v1311
+           */
+          getWellLogs(witsmlQuery)
         case _ =>
           throw new Exception(s"Provided object type `${objectType.toString}` is not supported.")
       }
+
+      val json = mapper.writeValueAsString(deserialized)
+      if (json == null) return null
+
+      WitsmlTransformer.transform(json)
+
     } catch {
       case t:Throwable =>
         val message = s"Error getting data from WITSML server (Version 1311)."
@@ -112,20 +128,20 @@ class WitsmlObjects1311(
 
         null
     }
+
   }
 
-  def getWells(witsmlQuery:WitsmlQuery):ObjWells = {
+  def getDtsInstalledSystems(witsmlQuery:WitsmlQuery):DataFrame = {
 
     try {
-      /*
-       * Note: Even if the server operates with version 1.3.11,
-       * the server internally converts the result into version
-       * v1411
-       */
-      val wells:com.hashmapinc.tempus.WitsmlObjects.v1411.ObjWells =
-        client.getWellsAsObj(witsmlQuery)
+      val data = client.getObjectData(witsmlQuery)
+      val xml = data.getXmlOut
 
-      wells
+      val deserialized = witsmlMarshaller
+        .deserialize(xml, classOf[com.hashmapinc.tempus.WitsmlObjects.v1311.ObjDtsInstalledSystems])
+      val json = mapper.writeValueAsString(deserialized)
+
+      WitsmlTransformer.transform(json)
 
     } catch {
       case t:Throwable => null
@@ -133,18 +149,17 @@ class WitsmlObjects1311(
 
   }
 
-  def getWellbores(witsmlQuery:WitsmlQuery):ObjWellbores = {
+  def getDtsMeasurements(witsmlQuery:WitsmlQuery):DataFrame = {
 
     try {
-      /*
-       * Note: Even if the server operates with version 1.3.11,
-       * the server internally converts the result into version
-       * v1411
-       */
-       val wellbores:com.hashmapinc.tempus.WitsmlObjects.v1411.ObjWellbores =
-         client.getWellboresForWellAsObj(witsmlQuery)
+      val data = client.getObjectData(witsmlQuery)
+      val xml = data.getXmlOut
 
-      wellbores
+      val deserialized = witsmlMarshaller
+        .deserialize(xml, classOf[com.hashmapinc.tempus.WitsmlObjects.v1311.ObjDtsMeasurements])
+      val json = mapper.writeValueAsString(deserialized)
+
+      WitsmlTransformer.transform(json)
 
     } catch {
       case t:Throwable => null
@@ -152,5 +167,105 @@ class WitsmlObjects1311(
 
   }
 
+  def getRealtimes(witsmlQuery:WitsmlQuery):DataFrame = {
+
+    try {
+      val data = client.getObjectData(witsmlQuery)
+      val xml = data.getXmlOut
+
+      val deserialized = witsmlMarshaller.deserialize(xml,
+        classOf[com.hashmapinc.tempus.WitsmlObjects.v1311.ObjRealtimes])
+      val json = mapper.writeValueAsString(deserialized)
+
+      WitsmlTransformer.transform(json)
+
+    } catch {
+      case t:Throwable => null
+    }
+
+  }
+
+  def getWells(witsmlQuery:WitsmlQuery):DataFrame = {
+
+    try {
+      val data = client.getObjectData(witsmlQuery)
+      val xml = data.getXmlOut
+
+      val deserialized = witsmlMarshaller
+        .deserialize(xml, classOf[com.hashmapinc.tempus.WitsmlObjects.v1311.ObjWells])
+      val json = mapper.writeValueAsString(deserialized)
+
+      WitsmlTransformer.transform(json)
+
+    } catch {
+      case t:Throwable => null
+    }
+
+  }
+
+  def getWellLogs(witsmlQuery:WitsmlQuery):DataFrame = {
+
+    try {
+      val data = client.getObjectData(witsmlQuery)
+      val xml = data.getXmlOut
+
+      val deserialized = witsmlMarshaller
+        .deserialize(xml, classOf[com.hashmapinc.tempus.WitsmlObjects.v1311.ObjWellLogs])
+      val json = mapper.writeValueAsString(deserialized)
+
+      WitsmlTransformer.transform(json)
+
+    } catch {
+      case t:Throwable => null
+    }
+
+  }
+
+  def getWellbores(witsmlQuery:WitsmlQuery):DataFrame = {
+
+    try {
+      /*
+       * The client interface method `getWellboresForWellAsObj`
+       * cannot be used as the WitsmlMarshaller depends on the
+       * Jackson version 2.9.9 which is not compliant with Spark
+       */
+      val data = client.getObjectData(witsmlQuery)
+      /*
+       * Extract the XML representation and convert into v1411
+       * compliant XML format
+       */
+      val xml = data.getXmlOut
+
+      val xml1411 = convertVersion(xml)
+      if (xml1411 == null) return null
+      /*
+       * Transform XML representation into POJO representation
+       */
+      val deserialized = witsmlMarshaller.deserialize(xml1411, classOf[ObjWellbores])
+      val json = mapper.writeValueAsString(deserialized)
+
+      WitsmlTransformer.transform(json)
+
+    } catch {
+      case t:Throwable => null
+    }
+
+  }
+  /**
+   * This method is a copy of the respective method
+   * with the Witsml Client; it is required for v1311
+   * response only
+   */
+  private def convertVersion(original: String):String = {
+
+    try {
+      val converted = transform.convertVersion(original)
+      if (converted.isEmpty) null else converted
+
+    } catch {
+      case t:Throwable => null
+    }
+
+  }
 }
 

@@ -6,7 +6,7 @@
 
     <groupId>de.kp.works</groupId>
     <artifactId>witsml-frame</artifactId>
-    <version>0.1.0</version>
+    <version>0.3.1</version>
 
     <name>WITSML Frames</name>
     <description></description>
@@ -20,17 +20,40 @@
         <maven.compiler.target>1.8</maven.compiler.target>
 
         <scala.binary.version>2.11</scala.binary.version>
+        <spark.version>2.4.7</spark.version>
 
      </properties>
 
     <dependencies>
+
+        <!-- TYPESAFE CONFIG
+        -->
+        <dependency>
+            <groupId>com.typesafe</groupId>
+            <artifactId>config</artifactId>
+            <version>1.4.1</version>
+        </dependency>
+
         <!-- HASHMAP INC - WITSML Objects SDK (Apache 2.0)
         -->
         <dependency>
             <groupId>com.hashmapinc.tempus</groupId>
             <artifactId>WitsmlObjects</artifactId>
             <version>1.1.45</version>
+            <exclusions>
+                <!--
+                Version 2.9.9 is not compatible with Apache Spark's v2.6.7.3
+
+                It must be excluded here, and the respective WITSML client
+                methods that refer to this version can no longer be used.
+                -->
+                <exclusion>
+                    <groupId>com.fasterxml.jackson.core</groupId>
+                    <artifactId>jackson-databind</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
+
         <!-- HASHMAP INC - WITSML Client (Apache 2.0)
         -->
         <dependency>
@@ -38,6 +61,21 @@
             <artifactId>witsml-client</artifactId>
             <version>1.1.0</version>
         </dependency>
+
+        <!-- Apache SPARK SQL
+        -->
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-sql_${scala.binary.version}</artifactId>
+            <version>${spark.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-log4j12</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
 
     </dependencies>
 

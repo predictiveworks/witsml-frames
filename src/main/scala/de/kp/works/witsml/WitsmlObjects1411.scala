@@ -22,6 +22,7 @@ import com.hashmapinc.tempus.WitsmlObjects.v1411._
 import com.hashmapinc.tempus.witsml.api.WitsmlVersion
 import com.hashmapinc.tempus.witsml.client.WitsmlQuery
 import de.kp.works.witsml.Objects1411._
+import de.kp.works.witsml.transform.trajectory.Trajectory
 import org.apache.spark.sql.DataFrame
 
 import scala.collection.JavaConversions._
@@ -34,7 +35,7 @@ class WitsmlObjects1411(
    /* Specify the password for Witsml Server */
    password:String) extends WitsmlObjects(endpoint, username, password, WitsmlVersion.VERSION_1411) {
 
-  def getObject(witsmlQuery: WitsmlQuery, objectType:Objects1411.Value, unpack:Boolean = true):DataFrame = {
+  def transform(witsmlQuery: WitsmlQuery, objectType:Objects1411.Value, unpack:Boolean = true):DataFrame = {
     try {
      objectType match {
         case ATTACHMENT =>
@@ -172,11 +173,8 @@ class WitsmlObjects1411(
           else nested(deserialized)
         case TRAJECTORY =>
           val deserialized = extract1411(witsmlQuery, classOf[ObjTrajectorys])
-          if (unpack) {
-            val json = deserialized.getTrajectory.map(mapper.writeValueAsString)
-            WitsmlTransformer.transform(json)
-          }
-          else nested(deserialized)
+          val transformer = new Trajectory(deserialized)
+          transformer.transform(unpack)
         case TUBULAR =>
           val deserialized = extract1411(witsmlQuery, classOf[ObjTubulars])
           if (unpack) {
